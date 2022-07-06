@@ -1,0 +1,113 @@
+#include<Wire.h>
+
+const int MPU_ADDR = 0x68; // I2C address of the MPU-6050
+int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+
+
+int val=0;
+int new_val=0;
+
+int ledState = LOW;             // ledState used to set the LED
+unsigned long previousMillis = 0;  
+const long interval = 30; 
+int xdata1=0;
+int ydata1=0;
+int zdata1=0;
+int xdata2=0;
+int ydata2=0;
+int zdata2=0;
+int rdatax=0;
+int rdatay=0;
+int rdataz=0;
+void setup() {
+  pinMode(13, OUTPUT);
+   Serial.begin(9600);
+   Wire.begin();
+   Wire.beginTransmission(MPU_ADDR);
+   Wire.write(0x6B); // PWR_MGMT_1 register
+   Wire.write(0); // set to zero (wakes up the MPU-6050)
+   Wire.endTransmission(true);
+   Serial.println("Setup complete");
+}
+
+void loop() {
+
+
+//***************************pot*****************************
+
+ val = analogRead(A0);
+ new_val=map(val, 0, 300, 10, 200);
+ Serial.println(new_val);
+
+//**********************************************************
+
+
+
+  
+   Wire.beginTransmission(MPU_ADDR);
+   Wire.write(0x3B); // starting with register 0x3B (ACCEL_XOUT_H)
+   Wire.endTransmission(true);
+   Wire.beginTransmission(MPU_ADDR);
+   Wire.requestFrom(MPU_ADDR, 14, true); // request a total of 14 registers
+   AcX = Wire.read() << 8 | Wire.read(); // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
+   AcY = Wire.read() << 8 | Wire.read(); // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+   AcZ = Wire.read() << 8 | Wire.read(); // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+   Tmp = Wire.read() << 8 | Wire.read(); // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
+   GyX = Wire.read() << 8 | Wire.read(); // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
+   GyY = Wire.read() << 8 | Wire.read(); // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+   GyZ = Wire.read() << 8 | Wire.read(); // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+
+   //Serial.print(AcX); Serial.print(" , ");
+   //Serial.print(AcY); Serial.print(" , ");
+   //Serial.print(AcZ); Serial.print(" , ");
+   //Serial.print(GyX); Serial.print(" , ");
+   //Serial.print(GyY); Serial.print(" , ");
+   //Serial.print(GyZ); 
+   Serial.print("\n");
+
+
+
+
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= interval) {
+    // save the last time you blinked the LED
+    previousMillis = currentMillis;
+
+    // if the LED is off turn it on and vice-versa:
+    if (ledState == LOW) {
+      ledState = HIGH;
+      
+xdata1=AcX;
+ydata1=AcY;
+zdata1=AcZ;
+
+    } else {
+      ledState = LOW;
+
+xdata2=AcX;
+ydata2=AcY;
+zdata2=AcZ;
+    }
+
+  }
+
+rdatax=abs((xdata2-xdata1)/interval);
+rdatay=abs((ydata2-ydata1)/interval);
+rdataz=abs((zdata2-zdata1)/interval);
+
+if((rdatax>new_val)||(rdatay>new_val)||(rdataz>new_val)){
+  digitalWrite(13, HIGH);
+  }
+  else
+  {
+    digitalWrite(13, LOW);
+    }
+
+
+  Serial.print(rdatax); Serial.print(" , ");
+   Serial.print(rdatay); Serial.print(" , ");
+   Serial.print(rdataz); Serial.print(" , ");
+    Serial.print("\n");
+      
+}
